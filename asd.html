@@ -1,0 +1,2287 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050506">
+<title>ملف سري // يوسف فوزي</title>
+<meta name="description" content="ملف معلومات سري. للمصرح لهم فقط.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Cairo:wght@400;600;700&family=IBM+Plex+Mono:wght@300;400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* ============================================================
+   0. TOKENS
+   ============================================================ */
+:root{
+  --bg:#050506;
+  --bg-2:#0b0b0e;
+  --panel:rgba(255,255,255,.04);
+  --line:rgba(255,255,255,.10);
+  --text:#e9e9ec;
+  --dim:#8b8b95;
+  --red:#ff2b3a;
+  --red-dim:rgba(255,43,58,.14);
+  --green:#3dff9e;
+  --green-dim:rgba(61,255,158,.12);
+  --amber:#ffb347;
+  --font-mono:'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-body:'Inter', system-ui, -apple-system, sans-serif;
+  --font-display:'Anton', Impact, sans-serif;
+  --font-ar:'Cairo', 'IBM Plex Mono', sans-serif;
+  --pad:clamp(18px,5vw,40px);
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+
+/* ============================================================
+   1. RESET / BASE
+   ============================================================ */
+*,*::before,*::after{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+html{
+  scroll-behavior:smooth;
+  background:var(--bg);
+  overflow-x:hidden;
+  -webkit-text-size-adjust:100%;
+}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font-ar);
+  font-size:15px;
+  line-height:1.65;
+  overflow-x:hidden;
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  transition:background 1.2s ease;
+  direction:rtl;
+}
+body.locked{overflow:hidden;height:100vh;}
+img{max-width:100%;display:block;}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+h1,h2,h3,h4,p{margin:0;}
+::selection{background:var(--red);color:#fff;}
+.hidden{display:none !important;}
+.red{color:var(--red);}
+.green{color:var(--green);}
+.dim{color:var(--dim);}
+
+/* scrollbar */
+::-webkit-scrollbar{width:8px;height:8px;}
+::-webkit-scrollbar-track{background:#08080a;}
+::-webkit-scrollbar-thumb{background:rgba(255,43,58,.35);border-radius:99px;}
+::-webkit-scrollbar-thumb:hover{background:rgba(255,43,58,.6);}
+
+/* ============================================================
+   2. FX LAYERS
+   ============================================================ */
+#sweep{
+  position:fixed;left:0;right:0;top:0;height:240px;z-index:87;
+  pointer-events:none;
+  background:linear-gradient(180deg,
+      transparent 0%,
+      rgba(61,255,158,.02) 40%,
+      rgba(61,255,158,.055) 50%,
+      rgba(61,255,158,.02) 60%,
+      transparent 100%);
+  animation:sweepMove 8s linear infinite;
+  will-change:transform;
+  transition:opacity 1s;
+}
+@keyframes sweepMove{
+  0%{transform:translate3d(0,-260px,0);}
+  100%{transform:translate3d(0,100vh,0);}
+}
+.fx{position:fixed;inset:0;pointer-events:none;}
+.fx.scanlines{
+  z-index:88;
+  background:repeating-linear-gradient(180deg,
+    rgba(255,255,255,.035) 0px,
+    rgba(255,255,255,.035) 1px,
+    transparent 1px,
+    transparent 3px);
+  opacity:.55;
+  mix-blend-mode:overlay;
+  transition:opacity 1s ease;
+}
+.fx.noise{
+  z-index:89;
+  opacity:.05;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/></filter><rect width='140' height='140' filter='url(%23n)'/></svg>");
+  transition:opacity 1s ease;
+}
+.fx.vignette{
+  z-index:86;
+  background:radial-gradient(ellipse at 50% 50%, transparent 38%, rgba(0,0,0,.6) 100%);
+}
+#particles{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.9;}
+#confetti{position:fixed;inset:0;z-index:130;pointer-events:none;}
+
+.flash{
+  position:fixed;inset:0;z-index:150;pointer-events:none;
+  background:rgba(255,43,58,.4);
+  opacity:0;
+}
+.flash.go{animation:flashOut .65s ease-out forwards;}
+@keyframes flashOut{0%{opacity:1;}100%{opacity:0;}}
+
+/* ============================================================
+   3. HUD
+   ============================================================ */
+#scrollProgress{
+  position:fixed;top:0;left:0;height:2px;width:0;z-index:95;
+  background:linear-gradient(90deg,var(--red),#ff7a5c);
+  box-shadow:0 0 12px rgba(255,43,58,.8);
+  transition:width .12s linear;
+}
+#hud{
+  position:fixed;top:0;left:0;right:0;z-index:94;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:calc(10px + env(safe-area-inset-top)) 14px 20px;
+  font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--dim);
+  background:linear-gradient(180deg,rgba(5,5,6,.94) 0%,rgba(5,5,6,.6) 55%,rgba(5,5,6,0) 100%);
+  pointer-events:none;
+  opacity:0;transition:opacity .8s ease;
+}
+#hud.on{opacity:1;}
+.hud-left{display:flex;align-items:center;gap:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hud-dot{
+  width:6px;height:6px;border-radius:50%;background:var(--red);
+  box-shadow:0 0 10px var(--red);flex:none;
+  animation:pulse 1.8s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.25;}}
+.hud-right{color:var(--green);white-space:nowrap;flex:none;}
+
+#soundToggle{
+  position:fixed;left:14px;bottom:calc(14px + env(safe-area-inset-bottom));
+  z-index:96;width:42px;height:42px;border-radius:50%;
+  border:1px solid var(--line);
+  background:rgba(12,12,15,.7);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  color:var(--dim);font-size:15px;
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;transition:opacity .6s ease, color .3s, border-color .3s, box-shadow .3s;
+}
+#soundToggle.on{opacity:1;}
+#soundToggle.active{color:var(--green);border-color:rgba(61,255,158,.45);box-shadow:0 0 18px rgba(61,255,158,.2);}
+
+/* ============================================================
+   4. FRAME / CORNER BRACKETS
+   ============================================================ */
+.frame{position:relative;border:1px solid rgba(255,43,58,.18);}
+.frame .c{position:absolute;width:13px;height:13px;border:2px solid var(--red);opacity:.85;pointer-events:none;}
+.frame .c1{top:-1px;left:-1px;border-right:0;border-bottom:0;}
+.frame .c2{top:-1px;right:-1px;border-left:0;border-bottom:0;}
+.frame .c3{bottom:-1px;left:-1px;border-right:0;border-top:0;}
+.frame .c4{bottom:-1px;right:-1px;border-left:0;border-top:0;}
+
+/* ============================================================
+   5. BUTTONS
+   ============================================================ */
+.btn{
+  position:relative;overflow:hidden;
+  display:inline-flex;align-items:center;justify-content:center;gap:10px;
+  padding:15px 26px;
+  border:1px solid rgba(255,43,58,.45);
+  background:rgba(255,43,58,.06);
+  color:#fff;
+  font-family:var(--font-mono);
+  font-size:11.5px;letter-spacing:.22em;text-transform:uppercase;
+  border-radius:2px;
+  transition:background .35s ease,border-color .35s ease,box-shadow .35s ease,transform .2s ease;
+  min-height:50px;
+  width:100%;max-width:360px;
+}
+.btn::after{
+  content:'';position:absolute;top:0;left:-120%;width:60%;height:100%;
+  background:linear-gradient(100deg,transparent,rgba(255,255,255,.16),transparent);
+  transform:skewX(-20deg);
+  transition:left .7s var(--ease);
+}
+.btn:hover::after,.btn:focus-visible::after{left:140%;}
+.btn:hover,.btn:focus-visible{
+  background:rgba(255,43,58,.14);
+  border-color:var(--red);
+  box-shadow:0 0 28px rgba(255,43,58,.25);
+  outline:none;
+}
+.btn:active{transform:scale(.975);}
+.btn.small{padding:11px 18px;font-size:10px;min-height:42px;letter-spacing:.18em;width:auto;}
+.btn.ghost{border-color:rgba(255,255,255,.2);background:rgba(255,255,255,.03);}
+.btn.ghost:hover{border-color:rgba(255,255,255,.5);background:rgba(255,255,255,.07);box-shadow:0 0 24px rgba(255,255,255,.09);}
+.btn.green{border-color:rgba(61,255,158,.4);background:rgba(61,255,158,.05);}
+.btn.green:hover{border-color:var(--green);background:rgba(61,255,158,.12);box-shadow:0 0 28px rgba(61,255,158,.2);}
+
+/* ============================================================
+   6. GLITCH
+   ============================================================ */
+.glitch{position:relative;display:inline-block;}
+.glitch::before,.glitch::after{
+  content:attr(data-text);
+  position:absolute;top:0;left:0;width:100%;height:100%;
+  pointer-events:none;opacity:0;
+}
+.glitch::before{color:var(--red);animation:glitchA 4.2s infinite steps(1);}
+.glitch::after{color:var(--green);animation:glitchB 3.6s infinite steps(1);}
+@keyframes glitchA{
+  0%,90%,100%{opacity:0;transform:translate(0);clip-path:inset(0 0 0 0);}
+  91%{opacity:.75;transform:translate(-2px,1px);clip-path:inset(8% 0 62% 0);}
+  93%{opacity:.75;transform:translate(2px,-1px);clip-path:inset(52% 0 22% 0);}
+  95%{opacity:.6;transform:translate(-1px,0);clip-path:inset(28% 0 44% 0);}
+  97%{opacity:0;}
+}
+@keyframes glitchB{
+  0%,88%,100%{opacity:0;transform:translate(0);clip-path:inset(0 0 0 0);}
+  89%{opacity:.55;transform:translate(2px,-1px);clip-path:inset(20% 0 50% 0);}
+  92%{opacity:.55;transform:translate(-2px,1px);clip-path:inset(64% 0 12% 0);}
+  94%{opacity:0;}
+}
+
+/* ============================================================
+   7. BOOT SCREEN
+   ============================================================ */
+#boot{
+  position:fixed;inset:0;z-index:200;
+  background:#050506;
+  display:flex;align-items:center;justify-content:center;
+  padding:22px;
+  text-align:center;
+  transition:opacity 1s ease,visibility 1s ease;
+}
+#boot.gone{opacity:0;visibility:hidden;pointer-events:none;}
+.boot-inner{width:100%;max-width:600px;}
+.boot-inner .frame{padding:clamp(24px,7vw,48px) clamp(18px,5vw,40px);background:rgba(255,255,255,.012);}
+
+.boot-warn{
+  color:var(--red);font-size:clamp(10px,3vw,12px);
+  letter-spacing:.4em;text-transform:uppercase;
+  text-shadow:0 0 16px rgba(255,43,58,.6);
+  animation:warnFlicker 4s infinite;
+}
+@keyframes warnFlicker{0%,96%,100%{opacity:1;}97%{opacity:.35;}98%{opacity:.9;}99%{opacity:.5;}}
+
+.boot-title{
+  font-family:var(--font-display);
+  font-size:clamp(26px,8.4vw,52px);
+  letter-spacing:.05em;line-height:1.02;
+  margin:16px 0 26px;
+  color:#fff;
+  text-transform:uppercase;
+}
+
+.boot-meta{max-width:360px;margin:0 auto 22px;text-align:left;}
+.mrow{
+  display:flex;justify-content:space-between;align-items:center;gap:14px;
+  padding:9px 0;
+  border-bottom:1px dashed rgba(255,255,255,.09);
+  font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+}
+.mrow span{color:var(--dim);}
+.mrow b{font-weight:500;letter-spacing:.14em;}
+
+.blink-cursor{
+  display:inline-block;color:var(--red);
+  font-size:16px;line-height:1;
+  animation:blink 1s steps(1) infinite;
+  margin-bottom:24px;
+}
+@keyframes blink{0%,49%{opacity:1;}50%,100%{opacity:0;}}
+
+.boot-stage{transition:opacity .5s ease;}
+.boot-log{
+  text-align:left;font-size:11.5px;letter-spacing:.1em;
+  color:var(--dim);min-height:150px;
+  display:flex;flex-direction:column;justify-content:flex-end;gap:7px;
+  margin-bottom:22px;
+}
+.boot-log .logline{
+  opacity:0;transform:translateY(6px);
+  animation:logIn .35s var(--ease) forwards;
+}
+.boot-log .logline.ok{color:var(--green);}
+@keyframes logIn{to{opacity:1;transform:none;}}
+
+.bar{
+  position:relative;height:5px;width:100%;
+  background:rgba(255,255,255,.08);
+  border-radius:99px;overflow:hidden;
+}
+.bar i{
+  display:block;height:100%;width:0;
+  background:linear-gradient(90deg,#0f9d5f,var(--green));
+  box-shadow:0 0 14px rgba(61,255,158,.6);
+  border-radius:99px;
+  transition:width .5s linear;
+}
+.bar.big{height:7px;}
+.boot-pct{
+  margin-top:10px;font-size:11px;letter-spacing:.28em;
+  color:var(--green);text-align:right;
+}
+.boot-welcome{
+  font-family:var(--font-display);
+  font-size:clamp(24px,8vw,46px);
+  letter-spacing:.06em;color:#fff;
+  text-shadow:0 0 34px rgba(61,255,158,.35);
+}
+.boot-welcome::after{
+  content:'▌';color:var(--green);font-family:var(--font-mono);
+  font-size:.7em;margin-left:4px;
+  animation:blink 1s steps(1) infinite;
+}
+
+/* ============================================================
+   8. MAIN / SECTIONS
+   ============================================================ */
+#main{position:relative;z-index:2;opacity:0;transition:opacity 1.1s ease;}
+#main.on{opacity:1;}
+
+.screen{
+  position:relative;
+  width:100%;max-width:1100px;
+  margin:0 auto;
+  padding:clamp(80px,13vh,130px) var(--pad) clamp(70px,11vh,120px);
+}
+.screen-center{
+  min-height:100svh;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  text-align:center;
+}
+
+.sec-head{margin-bottom:clamp(24px,5vw,44px);}
+.sec-tag{
+  font-size:10px;letter-spacing:.32em;text-transform:uppercase;
+  color:var(--red);margin-bottom:12px;
+  display:flex;align-items:center;gap:10px;
+}
+.sec-tag::before{content:'';width:22px;height:1px;background:var(--red);flex:none;}
+.sec-title{
+  font-family:var(--font-display);
+  font-size:clamp(28px,9vw,58px);
+  letter-spacing:.04em;line-height:1.02;
+  text-transform:uppercase;color:#fff;
+}
+.sec-sub{
+  margin-top:14px;font-size:12.5px;color:var(--dim);
+  letter-spacing:.06em;max-width:560px;
+}
+
+/* reveal */
+.reveal{opacity:0;transform:translateY(28px);
+  transition:opacity .9s var(--ease),transform .9s var(--ease);}
+.reveal.in{opacity:1;transform:none;}
+
+/* ============================================================
+   9. CARDS
+   ============================================================ */
+.card{
+  position:relative;
+  background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.012));
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:clamp(16px,4.5vw,24px);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  overflow:hidden;
+  transition:border-color .4s ease,transform .4s var(--ease),box-shadow .4s ease;
+}
+.card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,43,58,.5),transparent);
+  opacity:0;transition:opacity .4s;
+}
+.card:hover::before{opacity:1;}
+.card:hover{border-color:rgba(255,43,58,.3);box-shadow:0 14px 40px rgba(0,0,0,.5);}
+
+/* ============================================================
+   10. MEDIA FRAMES (image placeholders)
+   ============================================================ */
+.media{
+  position:relative;overflow:hidden;
+  background:#0c0c0f;
+  border:1px solid var(--line);
+  width:100%;
+}
+.media::before{
+  content:attr(data-ph);
+  position:absolute;inset:0;z-index:0;
+  display:flex;align-items:center;justify-content:center;
+  padding:14px;text-align:center;
+  font-size:9.5px;letter-spacing:.3em;color:rgba(255,255,255,.18);
+  text-transform:uppercase;
+  background:
+    repeating-linear-gradient(45deg,rgba(255,255,255,.022) 0 9px,transparent 9px 18px),
+    radial-gradient(circle at 50% 50%,rgba(255,43,58,.06),transparent 70%);
+}
+.media img{
+  position:relative;z-index:1;
+  width:100%;height:100%;object-fit:cover;display:block;
+  transition:opacity .9s ease,transform 1.4s var(--ease),filter .6s ease;
+}
+.media img.failed{opacity:0;}
+.media.ar-4x3{aspect-ratio:4/3;}
+.media.ar-1x1{aspect-ratio:1/1;}
+.media.ar-3x4{aspect-ratio:3/4;}
+.media.ar-16x9{aspect-ratio:16/9;}
+
+.media-scan{
+  position:absolute;inset:0;z-index:2;pointer-events:none;
+  background:repeating-linear-gradient(180deg,rgba(0,0,0,.22) 0 1px,transparent 1px 3px);
+  mix-blend-mode:multiply;opacity:.5;
+}
+.media-tag{
+  position:absolute;left:0;bottom:0;z-index:3;
+  background:rgba(5,5,6,.82);
+  border-top:1px solid rgba(255,43,58,.35);
+  border-right:1px solid rgba(255,43,58,.35);
+  padding:6px 11px;
+  font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:var(--red);
+  backdrop-filter:blur(6px);
+}
+.media-rec{
+  position:absolute;top:10px;right:10px;z-index:3;
+  display:flex;align-items:center;gap:6px;
+  font-size:9px;letter-spacing:.2em;color:var(--red);
+  background:rgba(5,5,6,.7);padding:4px 9px;border-radius:2px;
+  backdrop-filter:blur(6px);
+}
+.media-rec i{
+  width:6px;height:6px;border-radius:50%;background:var(--red);
+  box-shadow:0 0 8px var(--red);animation:pulse 1.4s infinite;
+}
+
+/* ============================================================
+   11. PROFILE
+   ============================================================ */
+.profile-grid{
+  display:grid;grid-template-columns:1fr;gap:16px;margin-bottom:clamp(30px,7vw,52px);
+}
+@media(min-width:820px){
+  .profile-grid{grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:22px;align-items:start;}
+}
+.profile-photo{border:1px solid rgba(255,43,58,.25);box-shadow:0 0 50px rgba(255,43,58,.09);}
+.profile-photo img{filter:grayscale(.35) contrast(1.06);}
+
+.profile-rows{display:flex;flex-direction:column;}
+.prow{
+  display:flex;justify-content:space-between;align-items:center;gap:14px;
+  padding:14px 2px;
+  border-bottom:1px solid rgba(255,255,255,.07);
+  font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+}
+.prow:last-child{border-bottom:none;}
+.prow span{color:var(--dim);flex:none;}
+.prow b{font-weight:500;text-align:right;letter-spacing:.1em;}
+.prow b.big{font-family:var(--font-display);font-size:20px;letter-spacing:.05em;}
+
+/* abilities */
+.abilities{display:flex;flex-direction:column;gap:18px;margin-bottom:clamp(30px,7vw,48px);}
+.ability-top{
+  display:flex;justify-content:space-between;align-items:baseline;gap:12px;
+  font-size:12px;letter-spacing:.09em;margin-bottom:9px;
+}
+.ability-top span:first-child{color:#d5d5da;}
+.ability-val{color:var(--green);font-size:12px;letter-spacing:.1em;flex:none;}
+.ability .bar i{background:linear-gradient(90deg,#0f9d5f,var(--green));
+  box-shadow:0 0 14px rgba(61,255,158,.45);}
+.ability.hot .bar i{background:linear-gradient(90deg,#a01020,var(--red));
+  box-shadow:0 0 14px rgba(255,43,58,.45);}
+.ability.hot .ability-val{color:var(--red);}
+
+/* ============================================================
+   12. INCIDENTS
+   ============================================================ */
+.grid-2{display:grid;grid-template-columns:1fr;gap:15px;}
+@media(min-width:780px){.grid-2{grid-template-columns:1fr 1fr;gap:20px;}}
+
+.inc-head{
+  display:flex;justify-content:space-between;align-items:center;gap:10px;
+  margin-bottom:14px;
+}
+.inc-num{font-size:10px;letter-spacing:.28em;color:var(--red);text-transform:uppercase;}
+.inc-status{
+  font-size:9px;letter-spacing:.2em;text-transform:uppercase;
+  padding:3px 9px;border:1px solid rgba(255,43,58,.4);color:var(--red);
+  border-radius:2px;background:rgba(255,43,58,.07);flex:none;
+}
+.inc-status.ok{border-color:rgba(61,255,158,.35);color:var(--green);background:rgba(61,255,158,.06);}
+.inc-title{
+  font-family:var(--font-body);font-weight:600;
+  font-size:clamp(17px,4.6vw,21px);line-height:1.3;
+  margin-bottom:12px;color:#fff;
+}
+.inc-desc{font-size:13px;color:#b6b6bf;margin-bottom:16px;line-height:1.7;}
+.inc-result{
+  border-left:2px solid rgba(255,43,58,.55);
+  padding:10px 0 10px 14px;margin-bottom:18px;
+  font-size:12.5px;color:#d8d8de;background:rgba(255,43,58,.04);
+}
+.inc-result span{
+  display:block;font-size:9px;letter-spacing:.28em;color:var(--red);
+  text-transform:uppercase;margin-bottom:5px;
+}
+
+/* ============================================================
+   13. SURVEILLANCE GALLERY
+   ============================================================ */
+.gallery{display:grid;grid-template-columns:1fr;gap:18px;}
+@media(min-width:620px){.gallery{grid-template-columns:repeat(2,1fr);gap:20px;}}
+@media(min-width:1000px){.gallery{grid-template-columns:repeat(3,1fr);}}
+
+.shot{
+  border:1px solid var(--line);
+  background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.008));
+  border-radius:12px;overflow:hidden;
+  transition:transform .5s var(--ease),border-color .4s,box-shadow .4s;
+}
+.shot:hover{transform:translateY(-5px);border-color:rgba(255,43,58,.32);box-shadow:0 18px 46px rgba(0,0,0,.55);}
+.shot .media{border:none;border-bottom:1px solid var(--line);}
+.shot .media img{filter:grayscale(.45) contrast(1.08) brightness(.94);}
+.shot:hover .media img{filter:grayscale(0) contrast(1.04) brightness(1);transform:scale(1.05);}
+.shot-meta{padding:14px 15px 16px;}
+.shot-id{font-size:9.5px;letter-spacing:.24em;color:var(--red);text-transform:uppercase;margin-bottom:9px;}
+.shot-line{
+  display:flex;justify-content:space-between;gap:10px;
+  font-size:10.5px;letter-spacing:.12em;color:var(--dim);
+  text-transform:uppercase;padding:3px 0;
+}
+.shot-line b{color:#cfcfd6;font-weight:400;}
+.shot-cap{
+  margin-top:12px;padding-top:12px;border-top:1px dashed rgba(255,255,255,.09);
+  font-size:12px;color:#c3c3cc;line-height:1.65;font-style:italic;
+}
+
+/* ============================================================
+   14. ANALYSIS
+   ============================================================ */
+.analysis{
+  display:flex;flex-direction:column;gap:2px;
+  border:1px solid var(--line);border-radius:12px;
+  background:rgba(255,255,255,.02);
+  padding:clamp(14px,4vw,22px);
+  margin-bottom:clamp(30px,7vw,52px);
+  overflow:hidden;
+}
+.an-row{
+  display:grid;
+  grid-template-columns:minmax(88px,auto) 1fr auto;
+  align-items:center;gap:12px;
+  padding:11px 0;
+  border-bottom:1px solid rgba(255,255,255,.055);
+  font-size:12px;letter-spacing:.08em;
+}
+.an-row:last-child{border-bottom:none;}
+.an-label{color:#cfcfd6;text-transform:uppercase;font-size:11px;letter-spacing:.16em;}
+.an-bar{
+  font-family:var(--font-mono);
+  color:var(--green);letter-spacing:2px;font-size:13px;
+  text-shadow:0 0 10px rgba(61,255,158,.5);
+  white-space:nowrap;overflow:hidden;
+}
+.an-val{color:var(--green);font-size:11px;letter-spacing:.1em;min-width:42px;text-align:right;}
+.an-row.err .an-bar{color:var(--red);text-shadow:0 0 10px rgba(255,43,58,.6);}
+.an-row.err .an-val{color:var(--red);}
+.an-err{
+  grid-column:2 / -1;
+  font-family:var(--font-mono);color:var(--red);
+  letter-spacing:.16em;font-size:12.5px;
+  text-shadow:0 0 14px rgba(255,43,58,.65);
+  animation:errFlicker 2.6s infinite steps(1);
+}
+@keyframes errFlicker{0%,92%,100%{opacity:1;}94%{opacity:.15;}96%{opacity:1;}98%{opacity:.3;}}
+
+.final-analysis{
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:12px;
+  padding:clamp(20px,5.5vw,34px);
+  background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.008));
+  text-align:center;
+  overflow:hidden;
+}
+.fa-label{
+  font-size:10px;letter-spacing:.34em;color:var(--red);
+  text-transform:uppercase;margin-bottom:20px;
+}
+.fa-line{
+  font-family:var(--font-body);font-weight:500;
+  font-size:clamp(16px,4.6vw,22px);color:#e6e6ea;
+  min-height:1.6em;
+}
+.fa-line::after{content:'▌';color:var(--red);animation:blink 1s steps(1) infinite;font-size:.85em;}
+.fa-line.done::after{content:'';}
+
+.fa-reveal{
+  opacity:0;max-height:0;overflow:hidden;
+  transition:opacity .6s ease,max-height .8s var(--ease);
+}
+.fa-reveal.show{opacity:1;max-height:400px;margin-top:26px;}
+.fa-boom{
+  font-family:var(--font-display);
+  font-size:clamp(30px,10vw,64px);line-height:1.02;
+  color:var(--red);letter-spacing:.03em;
+  text-shadow:0 0 34px rgba(255,43,58,.55);
+  animation:shake .5s ease-out;
+}
+.fa-boom2{
+  font-family:var(--font-display);
+  font-size:clamp(19px,6vw,34px);line-height:1.1;
+  color:#fff;letter-spacing:.05em;margin-top:12px;
+}
+@keyframes shake{
+  0%{transform:translate(0) scale(1.12);}
+  20%{transform:translate(-7px,3px) scale(1);}
+  40%{transform:translate(6px,-3px);}
+  60%{transform:translate(-4px,2px);}
+  80%{transform:translate(3px,-1px);}
+  100%{transform:translate(0);}
+}
+
+/* ============================================================
+   15. WANTED POSTER
+   ============================================================ */
+.wanted-wrap{display:flex;flex-direction:column;align-items:center;}
+.wanted-poster{
+  position:relative;width:100%;max-width:600px;
+  padding:clamp(24px,6vw,44px) clamp(18px,5vw,40px);
+  text-align:center;
+  background:
+    radial-gradient(120% 80% at 50% 0%,rgba(255,43,58,.11),transparent 62%),
+    linear-gradient(180deg,#141114,#09090b);
+  border:2px solid rgba(255,43,58,.32);
+  box-shadow:0 0 70px rgba(255,43,58,.1),inset 0 0 80px rgba(0,0,0,.65);
+  margin-bottom:32px;
+}
+.wanted-stamp{
+  position:absolute;top:16px;right:-6px;
+  border:2px solid var(--red);color:var(--red);
+  padding:5px 11px;font-size:9px;letter-spacing:.26em;
+  transform:rotate(8deg);opacity:.8;
+  background:rgba(255,43,58,.07);
+}
+.wanted-top{
+  font-size:9.5px;letter-spacing:.34em;color:var(--dim);
+  text-transform:uppercase;margin-bottom:10px;
+}
+.wanted-title{
+  font-family:var(--font-display);
+  font-size:clamp(52px,17vw,112px);
+  line-height:.9;letter-spacing:.05em;color:#fff;
+  text-shadow:0 0 40px rgba(255,43,58,.4),0 0 90px rgba(255,43,58,.2);
+  margin-bottom:22px;
+}
+.wanted-photo{
+  max-width:300px;margin:0 auto 20px;
+  border:2px solid rgba(255,43,58,.4);
+  box-shadow:0 0 40px rgba(255,43,58,.15);
+}
+.wanted-photo img{height:auto;object-fit:contain;filter:grayscale(1) contrast(1.2) brightness(.9);}
+.wanted-name{
+  font-family:var(--font-display);
+  font-size:clamp(32px,11vw,60px);
+  letter-spacing:.16em;color:#fff;margin-bottom:8px;
+}
+.wanted-sub{
+  font-size:10px;letter-spacing:.3em;color:var(--red);
+  text-transform:uppercase;margin-bottom:26px;
+}
+.wanted-charges{text-align:left;max-width:400px;margin:0 auto 26px;}
+.wanted-charges h4{
+  font-size:10px;letter-spacing:.3em;color:var(--dim);
+  text-transform:uppercase;margin-bottom:14px;font-weight:400;
+  padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,.1);
+}
+.charge{
+  display:flex;gap:12px;align-items:flex-start;
+  font-size:13.5px;color:#d9d9e0;padding:7px 0;line-height:1.6;
+}
+.charge::before{content:'▸';color:var(--red);flex:none;}
+.wanted-reward{
+  display:inline-block;
+  border:1px solid rgba(255,179,71,.45);
+  background:rgba(255,179,71,.07);
+  color:var(--amber);
+  padding:12px 22px;
+  font-size:12px;letter-spacing:.24em;text-transform:uppercase;
+  margin-bottom:24px;
+}
+.wanted-note{
+  font-size:11px;letter-spacing:.18em;color:var(--dim);
+  text-transform:uppercase;line-height:1.9;
+  border-top:1px dashed rgba(255,255,255,.12);
+  padding-top:20px;
+}
+
+/* ============================================================
+   16. SECRET FILE
+   ============================================================ */
+#s-secret{background:#000;}
+.secret-wrap{
+  display:flex;flex-direction:column;align-items:center;gap:26px;
+  width:100%;max-width:560px;
+}
+.secret-line{
+  font-family:var(--font-mono);
+  font-size:clamp(14px,4.4vw,19px);
+  letter-spacing:.14em;color:#cfcfd6;
+  min-height:1.6em;
+}
+.secret-line.big{
+  font-family:var(--font-display);
+  font-size:clamp(30px,11vw,64px);
+  letter-spacing:.1em;color:#fff;
+  text-shadow:0 0 40px rgba(255,255,255,.16);
+  min-height:1.15em;
+}
+.secret-line.file{
+  font-family:var(--font-mono);
+  color:var(--green);font-size:clamp(13px,4vw,16px);
+  letter-spacing:.2em;
+  text-shadow:0 0 18px rgba(61,255,158,.45);
+  border:1px solid rgba(61,255,158,.25);
+  padding:14px 20px;background:rgba(61,255,158,.04);
+}
+.secret-line .cursor{color:var(--green);animation:blink 1s steps(1) infinite;}
+
+/* ============================================================
+   17. WARM MODE + PERSONAL MESSAGE
+   ============================================================ */
+body.warm{background:#080507;}
+body.warm .fx.scanlines,
+body.warm .fx.noise,
+body.warm .fx.vignette,
+body.warm #sweep{opacity:0;}
+body.warm #hud{opacity:0;}
+body.warm #scrollProgress{background:linear-gradient(90deg,#ff8a5c,#ff5c8a);}
+
+#s-message{
+  position:relative;
+  max-width:820px;
+  padding-top:clamp(70px,12vh,120px);
+  padding-bottom:clamp(70px,12vh,120px);
+}
+#s-message::before{
+  content:'';position:absolute;inset:-10% -30%;
+  background:
+    radial-gradient(50% 34% at 50% 6%,rgba(255,138,92,.14),transparent 70%),
+    radial-gradient(46% 32% at 50% 96%,rgba(255,92,138,.12),transparent 70%);
+  pointer-events:none;z-index:-1;
+}
+.warm-inner{display:flex;flex-direction:column;align-items:center;text-align:center;}
+
+.warm-photo{
+  width:min(100%,380px);
+  border-radius:18px;overflow:hidden;
+  border:1px solid rgba(255,180,140,.28);
+  box-shadow:0 26px 70px rgba(0,0,0,.6),0 0 90px rgba(255,138,92,.14);
+  margin-bottom:34px;
+}
+.warm-photo .media{border:none;background:#120c0e;}
+.warm-photo .media::before{color:rgba(255,200,170,.2);}
+.warm-photo img{height:auto;object-fit:contain;filter:none;}
+
+.warm-title{
+  font-family:var(--font-body);font-weight:600;
+  font-size:clamp(26px,7.6vw,46px);
+  line-height:1.2;color:#fff;margin-bottom:30px;
+  letter-spacing:-.01em;
+}
+.warm-title .heart{
+  color:#ff5c78;display:inline-block;
+  animation:heartBeat 2.4s ease-in-out infinite;
+  text-shadow:0 0 22px rgba(255,92,120,.6);
+}
+@keyframes heartBeat{0%,100%{transform:scale(1);}12%{transform:scale(1.16);}24%{transform:scale(1);}36%{transform:scale(1.1);}}
+
+.warm-msg{
+  font-family:var(--font-ar);
+  direction:rtl;text-align:right;
+  font-size:clamp(16px,4.6vw,21px);
+  line-height:2.05;
+  color:#f2eae6;
+  white-space:pre-wrap;
+  word-break:break-word;
+  max-width:660px;
+  min-height:2em;
+  padding:clamp(18px,5vw,30px) clamp(16px,5vw,32px);
+  background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.012));
+  border:1px solid rgba(255,180,140,.16);
+  border-radius:16px;
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+}
+.warm-msg::after{
+  content:'▌';color:#ff8a5c;animation:blink 1s steps(1) infinite;
+  font-size:.85em;
+}
+.warm-msg.done::after{content:'';}
+.warm-hint{
+  margin-top:16px;font-size:10px;letter-spacing:.24em;
+  color:rgba(255,200,170,.35);text-transform:uppercase;
+  transition:opacity .5s;
+}
+.warm-hint.gone{opacity:0;}
+
+/* ============================================================
+   18. FINAL
+   ============================================================ */
+#s-final{background:transparent;}
+.final-stage{
+  width:100%;max-width:640px;
+  display:flex;flex-direction:column;align-items:center;
+  text-align:center;gap:22px;
+}
+.final-step{
+  width:100%;
+  display:flex;flex-direction:column;align-items:center;gap:18px;
+  animation:fadeUp .9s var(--ease) both;
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:none;}}
+.final-text{
+  font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:#cfcfd6;
+}
+.final-text.green{color:var(--green);text-shadow:0 0 20px rgba(61,255,158,.45);letter-spacing:.22em;}
+.final-text.dim2{color:var(--dim);}
+.final-bar{width:min(100%,400px);}
+
+.final-name{
+  font-family:var(--font-display);
+  font-size:clamp(50px,17vw,120px);
+  line-height:.9;letter-spacing:.1em;color:#fff;
+  text-shadow:0 0 50px rgba(255,43,58,.35);
+  animation:fadeUp 1s var(--ease) both;
+}
+.final-hb{
+  font-family:var(--font-display);
+  font-size:clamp(22px,7.5vw,44px);
+  letter-spacing:.06em;color:var(--red);
+  text-shadow:0 0 34px rgba(255,43,58,.55);
+  animation:fadeUp 1s .25s var(--ease) both;
+}
+.final-tag{
+  font-size:clamp(11px,3.6vw,13px);
+  letter-spacing:.28em;line-height:2.2;
+  color:#c9c9d1;text-transform:uppercase;
+  animation:fadeUp 1s .5s var(--ease) both;
+}
+.final-credit{
+  margin-top:22px;padding-top:24px;
+  border-top:1px solid rgba(255,255,255,.09);
+  font-size:12px;letter-spacing:.14em;color:var(--dim);
+  animation:fadeUp 1s .8s var(--ease) both;
+  width:100%;
+}
+
+/* ============================================================
+   19. MODAL
+   ============================================================ */
+.modal{
+  position:fixed;inset:0;z-index:160;
+  display:none;align-items:center;justify-content:center;
+  padding:18px;
+}
+.modal.open{display:flex;}
+.modal-backdrop{
+  position:absolute;inset:0;
+  background:rgba(2,2,3,.88);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  animation:fadeIn .35s ease both;
+}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+.modal-panel{
+  position:relative;z-index:1;
+  width:100%;max-width:560px;
+  max-height:86svh;overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  background:linear-gradient(180deg,#101013,#08080a);
+  border:1px solid rgba(255,43,58,.28);
+  padding:clamp(20px,5.5vw,32px);
+  animation:modalIn .45s var(--ease) both;
+}
+@keyframes modalIn{from{opacity:0;transform:translateY(22px) scale(.97);}to{opacity:1;transform:none;}}
+.modal-close{
+  position:absolute;top:12px;right:12px;z-index:4;
+  width:36px;height:36px;
+  display:flex;align-items:center;justify-content:center;
+  border:1px solid var(--line);border-radius:50%;
+  color:var(--dim);font-size:14px;
+  background:rgba(0,0,0,.4);
+  transition:.3s;
+}
+.modal-close:hover{color:#fff;border-color:var(--red);background:rgba(255,43,58,.14);}
+.modal-kicker{
+  font-size:9.5px;letter-spacing:.3em;color:var(--red);
+  text-transform:uppercase;margin-bottom:12px;
+}
+.modal-title{
+  font-family:var(--font-body);font-weight:600;
+  font-size:clamp(18px,5.2vw,24px);color:#fff;
+  line-height:1.3;margin-bottom:18px;
+}
+.modal-media{margin-bottom:18px;border:1px solid var(--line);}
+.modal-media img{object-fit:contain;}
+.modal-text{font-size:13.5px;color:#bfbfc8;line-height:1.85;margin-bottom:14px;}
+.modal-text:last-child{margin-bottom:0;}
+.modal-box{
+  border-left:2px solid rgba(255,43,58,.5);
+  background:rgba(255,43,58,.05);
+  padding:12px 14px;margin-bottom:14px;
+  font-size:12.5px;color:#d6d6dd;line-height:1.75;
+}
+.modal-box span{
+  display:block;font-size:9px;letter-spacing:.26em;color:var(--red);
+  text-transform:uppercase;margin-bottom:6px;
+}
+
+/* ============================================================
+   20. MISC
+   ============================================================ */
+.stack{display:flex;flex-direction:column;align-items:center;gap:14px;}
+.center{display:flex;justify-content:center;}
+.sr-only{
+  position:absolute;width:1px;height:1px;padding:0;margin:-1px;
+  overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;
+}
+
+/* reduced motion */
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:.001ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.001ms !important;
+  }
+  html{scroll-behavior:auto;}
+}
+</style>
+</head>
+
+<body class="locked">
+
+<!-- ===================== FX ===================== -->
+<canvas id="particles" aria-hidden="true"></canvas>
+<div class="fx noise" aria-hidden="true"></div>
+<div class="fx scanlines" aria-hidden="true"></div>
+<div class="fx vignette" aria-hidden="true"></div>
+<div id="sweep" aria-hidden="true"></div>
+<canvas id="confetti" aria-hidden="true"></canvas>
+
+<!-- ===================== HUD ===================== -->
+<div id="scrollProgress" aria-hidden="true"></div>
+<header id="hud" aria-hidden="true">
+  <div class="hud-left"><span class="hud-dot"></span> ملف سري // الموضوع: يوسف فوزي</div>
+  <div class="hud-right" id="hudRight">في الانتظار</div>
+</header>
+<button id="soundToggle" aria-label="تشغيل الصوت المحيط" title="تشغيل الصوت">♪</button>
+
+<!-- ===================== BOOT ===================== -->
+<div id="boot">
+  <div class="boot-inner">
+    <div class="frame">
+      <span class="c c1"></span><span class="c c2"></span><span class="c c3"></span><span class="c c4"></span>
+
+      <!-- STAGE 1 -->
+      <div class="boot-stage" id="bootStage1">
+        <div class="boot-warn">⚠ سري للغاية ⚠</div>
+        <h1 class="boot-title glitch" data-text="ملف أفراد سري">ملف أفراد سري</h1>
+
+        <div class="boot-meta">
+          <div class="mrow"><span>الموضوع</span><b>يوسف فوزي</b></div>
+          <div class="mrow"><span>الاسم الحركي</span><b class="red">أسد</b></div>
+          <div class="mrow"><span>الحالة</span><b class="green">نشط</b></div>
+        </div>
+
+        <div class="blink-cursor" aria-hidden="true">▌</div>
+        <div class="center">
+          <button id="accessBtn" class="btn">[ فتح الملف السري ]</button>
+        </div>
+      </div>
+
+      <!-- STAGE 2 -->
+      <div class="boot-stage hidden" id="bootStage2">
+        <div class="boot-log" id="bootLog" aria-live="polite"></div>
+        <div class="bar big"><i id="bootBar"></i></div>
+        <div class="boot-pct" id="bootPct">0%</div>
+      </div>
+
+      <!-- STAGE 3 -->
+      <div class="boot-stage hidden" id="bootStage3">
+        <div class="boot-welcome" id="bootWelcome"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MAIN ===================== -->
+<main id="main" aria-hidden="true">
+
+  <!-- ============ SCREEN 2 : SUBJECT PROFILE ============ -->
+  <section class="screen" id="s-profile" data-label="ملف 01 // البيانات">
+    <div class="sec-head reveal">
+      <div class="sec-tag">ملف 01 — البيانات</div>
+      <h2 class="sec-title glitch" data-text="بيانات الشخص">بيانات الشخص</h2>
+      <p class="sec-sub">تم استرجاعه من خادم آمن. لا تنشره ولا تخبر الشخص. (سيعرف بطريقة ما.)</p>
+    </div>
+
+    <div class="profile-grid">
+      <div class="media ar-3x4 profile-photo reveal" data-ph="الصورة قيد الانتظار // 1.JPEG">
+        <img id="profilePhoto" alt="صورة الشخص">
+        <div class="media-scan"></div>
+        <div class="media-rec"><i></i> تسجيل</div>
+        <div class="media-tag">الشخص // يوسف فوزي</div>
+      </div>
+
+      <div class="card reveal" style="transition-delay:120ms">
+        <div class="profile-rows" id="profileRows"></div>
+      </div>
+    </div>
+
+    <div class="sec-head reveal" style="margin-bottom:22px">
+      <div class="sec-tag">Section 01.A</div>
+      <h3 class="sec-title" style="font-size:clamp(22px,6.5vw,34px)">KNOWN ABILITIES</h3>
+    </div>
+
+    <div class="abilities" id="abilities"></div>
+
+    <div class="stack">
+      <button class="btn" data-next="#s-incidents">[ عرض التقرير الكامل ]</button>
+    </div>
+  </section>
+
+  <!-- ============ SCREEN 3 : INCIDENTS ============ -->
+  <section class="screen" id="s-incidents" data-label="ملف 02 // الوقائع">
+    <div class="sec-head reveal">
+      <div class="sec-tag">ملف 02 — سجل الأدلة</div>
+      <h2 class="sec-title glitch" data-text="وقائع سرية">وقائع سرية</h2>
+      <p class="sec-sub">أحداث موثقة تخص الشخص. أبلغ عنها شهود يرغبون في عدم الكشف عن هويتهم. (كانوا جميعًا نحن.)</p>
+    </div>
+
+    <div class="grid-2" id="incidents"></div>
+  </section>
+
+  <!-- ============ SCREEN 4 : SURVEILLANCE ============ -->
+  <section class="screen" id="s-surveillance" data-label="ملف 03 // الأرشيف">
+    <div class="sec-head reveal">
+      <div class="sec-tag">ملف 03 — السجل المرئي</div>
+      <h2 class="sec-title glitch" data-text="أرشيف المراقبة">أرشيف المراقبة</h2>
+      <p class="sec-sub">أدلة مصورة بعيدة المدى. لم يكن الشخص على علم بالكاميرا. هو غير واعٍ بمعظم الأشياء.</p>
+    </div>
+
+    <div class="gallery" id="gallery"></div>
+  </section>
+
+  <!-- ============ SCREEN 5 : ANALYSIS ============ -->
+  <section class="screen" id="s-analysis" data-label="ملف 04 // التحليل">
+    <div class="sec-head reveal">
+      <div class="sec-tag">ملف 04 — نفسي</div>
+      <h2 class="sec-title glitch" data-text="تحليل السلوك">تحليل السلوك</h2>
+      <p class="sec-sub">تم احتسابه من 4 سنوات من المراقبة الميدانية. هامش الخطأ: مضحك.</p>
+    </div>
+
+    <div class="analysis" id="analysisRows"></div>
+
+    <div class="final-analysis reveal" id="finalAnalysis">
+      <div class="fa-label">التحليل النهائي</div>
+      <p class="fa-line" id="faLine1"></p>
+      <div class="fa-reveal" id="faReveal">
+        <div class="fa-boom">بهزر معاك.</div>
+        <div class="fa-boom2">هو بالتأكيد مش طبيعي.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SCREEN 6 : WANTED ============ -->
+  <section class="screen screen-center" id="s-wanted" data-label="ملف 05 // مذكرة ضبط">
+    <div class="wanted-wrap">
+      <div class="wanted-poster reveal">
+        <div class="wanted-stamp">سري</div>
+
+        <div class="wanted-top">بأمر من مكتب أعياد الميلاد</div>
+        <h2 class="wanted-title">مطلوب</h2>
+
+        <div class="media wanted-photo" data-ph="صورة الضبط // 1.JPEG">
+          <img id="wantedPhoto" alt="الشخص المطلوب">
+          <div class="media-scan"></div>
+        </div>
+
+        <div class="wanted-name" id="wantedName">يوسف فوزي</div>
+        <div class="wanted-sub" id="wantedSub">الاسم الحركي — أسد</div>
+
+        <div class="wanted-charges">
+          <h4>التهم</h4>
+          <div id="wantedCharges"></div>
+        </div>
+
+        <div class="wanted-reward" id="wantedReward">المكافأة: كعكة عيد ميلاد واحدة 🎂</div>
+
+        <div class="wanted-note" id="wantedNote">
+          إذا وُجد، تمنى له عيد ميلاد سعيدًا فورًا.
+        </div>
+      </div>
+
+      <button class="btn" data-next="#s-secret">[ متابعة التحقيق ]</button>
+    </div>
+  </section>
+
+  <!-- ============ SCREEN 7 : THE SECRET FILE ============ -->
+  <section class="screen screen-center" id="s-secret" data-label="ملف 06 // ؟؟؟">
+    <div class="secret-wrap">
+      <div class="secret-line" id="secretA"></div>
+      <div class="secret-line big" id="secretB"></div>
+      <div class="secret-line" id="secretC"></div>
+      <div class="secret-line file hidden" id="secretD">ملف: رسالة_شخصية.txt</div>
+      <button class="btn green hidden" id="openMessage">[ فتح الرسالة الشخصية ]</button>
+    </div>
+  </section>
+
+  <!-- ============ SCREEN 8 : PERSONAL MESSAGE ============ -->
+  <section class="screen" id="s-message" data-label="شخصي">
+    <div class="warm-inner">
+      <div class="warm-photo media" data-ph="الصورة // 5.JPEG">
+        <img id="warmPhoto" alt="ذكرى تجمعنا">
+      </div>
+
+      <h2 class="warm-title" id="warmTitle">عيد ميلاد سعيد يا أسد <span class="heart">❤</span></h2>
+
+      <div class="warm-msg" id="arabicMsg" dir="rtl" lang="ar"></div>
+      <div class="warm-hint" id="warmHint">اضغط في أي مكان للتخطي</div>
+    </div>
+  </section>
+
+  <!-- ============ FINAL SCREEN ============ -->
+  <section class="screen screen-center" id="s-final" data-label="إغلاق">
+    <div class="final-stage">
+
+      <div class="final-step" id="finalStep1">
+        <div class="final-text">جارٍ إغلاق الملف السري...</div>
+        <div class="bar big final-bar"><i id="closeBar"></i></div>
+      </div>
+
+      <div class="final-step hidden" id="finalStep2">
+        <div class="final-text dim2">حالة الملف:</div>
+        <div class="final-text green">تم الحفظ نهائيًا.</div>
+      </div>
+
+      <div class="final-step hidden" id="finalStep3">
+        <div class="final-name">يوسف فوزي</div>
+        <div class="final-hb">عيد ميلاد سعيد 🎂</div>
+        <div class="final-tag">
+          سنة جديدة.<br>
+          فصل جديد.<br>
+          نفس الأسطورة.
+        </div>
+        <div class="final-credit" id="finalCredit">صُنعت بحب ❤️ من صديقك يوسف يا نيجماااااع.</div>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<audio id="messageMusic" src="music.mpeg" preload="auto"></audio>
+
+<!-- ===================== MODAL ===================== -->
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="modal-backdrop" data-close></div>
+  <div class="modal-panel frame">
+    <span class="c c1"></span><span class="c c2"></span><span class="c c3"></span><span class="c c4"></span>
+    <button class="modal-close" data-close aria-label="إغلاق">✕</button>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+/* ================================================================
+   ================================================================
+   ★★★  CONFIG — EDIT EVERYTHING PERSONAL RIGHT HERE  ★★★
+   ================================================================
+   Just change the text / image paths below. Nothing else needed.
+   Image paths are relative — drop your files in an /images folder.
+   ================================================================ */
+
+const CONFIG = {
+
+  /* ---------- BOOT SCREEN ---------- */
+  boot: {
+    steps: [
+      "جارٍ إنشاء اتصال آمن...",
+      "جارٍ التحقق من هوية الشخص...",
+      "جارٍ فحص قاعدة البيانات...",
+      "جارٍ فك تشفير الملف...",
+      "تم السماح بالدخول ✓"
+    ],
+    welcome: "أهلًا يا أسد."
+  },
+
+  /* ---------- SCREEN 2 : PROFILE ---------- */
+  profile: {
+    photo: "1.jpeg",
+    rows: [
+      { label: "الموضوع",           value: "يوسف فوزي",       accent: "" },
+      { label: "الاسم الحركي",      value: "أسد",             accent: "red" },
+      { label: "الحالة",            value: "وضع عيد الميلاد", accent: "green" },
+      { label: "مستوى الخطورة",     value: "99%",             accent: "red" },
+      { label: "مستوى الصداقة",     value: "∞",               accent: "green", big: true }
+    ],
+    abilities: [
+      { label: "إضحاك الجميع",                 value: 99,  hot: false },
+      { label: "صناعة الفوضى",                 value: 97,  hot: true  },
+      { label: "التأخر",                       value: 94,  hot: true  },
+      { label: "اتخاذ قرارات مشكوك فيها",      value: 91,  hot: true  },
+      { label: "أن تكون صديقًا رائعًا",        value: 100, hot: false }
+    ]
+  },
+
+  /* ---------- SCREEN 3 : INCIDENT REPORTS ---------- */
+  incidents: [
+    {
+      id: "001",
+      status: "بلا حل",
+      title: "\"كذبة الخمس دقائق\"",
+      desc: "زعم الشخص أنه سيصل خلال 5 دقائق.",
+      result: "وقت الوصول الفعلي: 47 دقيقة.",
+      image: "1.jpeg",
+      evidence: "أكد تتبع GPS أن الشخص كان وقت المكالمة لا يزال في السرير يشاهد المقاطع، ولم يجد حذاءه الآخر بعد.",
+      extra: "شوهد لاحقًا يصل وفي يده مشروب ومن دون أي اعتذار. وصف الشهود المشهد بأنه \"أسد الكلاسيكي\"."
+    },
+    {
+      id: "002",
+      status: "مؤكد",
+      title: "\"لحمه نيه\"",
+      desc: "زعم المجرم انه الشيف الشربيني .",
+      result: "اكلنا اللحمه بها دم.",
+      image: "1.jpeg",
+      evidence: "البصمات  و شهادة الشهود العيان و بواقي الدم في الطبق يدل على انه فتاي.",
+      extra: "لم يُظهر الشخص أي ندم، بل ادعا انها لذيذه مع الرغم من شهادتي انا و زيزو الغلبان."
+    },
+    {
+      id: "003",
+      status: "سري",
+      title: "\"النكتة التي لم تكن مضحكة\"",
+      desc: "قال الشخص نكتة. يقول على hotdog كلب سخن.",
+      result: "قيّم الشخص نكتته بنفسه 10/10.",
+      image: "1.jpeg",
+      evidence: "يؤكد تحليل الصوت أن ضحكة الشخص استمرت 14 ثانية أطول من النكتة نفسها.",
+      extra: "كشف التحقيق اللاحق أن لدى الشخص نحو 200 نكتة أخرى بالجودة نفسها."
+    },
+    {
+      id: "004",
+      status: "نشط",
+      title: "\"مكالمة الثالثة صباحًا\"",
+      desc: "اتصل الشخص في الثالثة صباحًا لمناقشة لا شيء مهم إطلاقًا.",
+      result: "مدة المكالمة: ساعة و22 دقيقة.",
+      image: "1.jpeg",
+      evidence: "يكشف نص المكالمة عن 4% معلومات مفيدة و96% كلام فارغ. ويؤكد الشاهد أنها كانت أفضل لحظة في الأسبوع.",
+      extra: "من المعروف أن الشخص يكرر هذا السلوك. توقف الشهود عن الشكوى."
+    },
+    {
+      id: "005",
+      status: "مؤكد",
+      title: "\"بيتعولق في لعب كره القدم\"",
+      desc: "بتعامل بعفوية شديدة مع الكرة. لا يلتزم بالقواعد. يصر على أنه \"بيتعلم\".",
+      result: "في نهاية المطاف اصيب بذراعة و ركب شورما و رجع يلعب تاني.",
+      image: "11.jpeg",
+      evidence: "التحليل الإحصائي: يظهر ان الشخص في 87% من حياته بيفكر من مؤخرته .",
+      extra: "الصور المشوشة هي الأفضل، موضوعيًا."
+    },
+    {
+      id: "006",
+      status: "مختوم",
+      title: "\"الفكرة السيئة\"",
+      desc: "قال الشخص العبارة: \"ثق بي، أنا عارف بعمل إيه\".",
+      result: "لم يكن يعرف ماذا يفعل.",
+      image: "1.jpeg",
+      evidence: "تم تصنيف العبارة كمؤشر عالي الخطورة من قبل المكتب. غالبًا ما تتبعها قصة لا تُنسى.",
+      extra: "لم يُصب أحد بأذى خطير، لكن الجميع استمتعوا جدًا."
+    }
+  ],
+
+  /* ---------- SCREEN 4 : SURVEILLANCE ARCHIVE ---------- */
+  memories: [
+    { image: "4.jpeg", date: "2025", location: "سري", caption: "تم ضبط الشخص وهو يعوم. الكاميرا لم تستطع مجاراته." },
+    { image: "5.jpeg", date: "1950", location: "سري", caption: "اللحظة الدقيقة التي سبقت حدوث الرحلة الافضل." },
+    { image: "7.jpeg", date: "2026", location: "سري", caption: "تشجيع \"كأس العالم\"" },
+    { image: "12.jpeg", date: "2004", location: "سري", caption: "دليل على أنه يبتسم طبيعيًا أحيانًا." },
+    { image: "3.jpeg", date: "2023", location: "سري", caption: "عندما كان الشخص يدعي انه همبكا الكارف" },
+    { image: "10.jpeg", date: "2023", location: "سري", caption: "ذروة الفوضى. ذروة الصداقة. سنكررها." }
+  ],
+
+  /* ---------- SCREEN 5 : BEHAVIORAL ANALYSIS ---------- */
+  analysis: [
+    { label: "الفوضى",                    value: 100 },
+    { label: "الفكاهة",                   value: 90  },
+    { label: "الفطرة السليمة",            value: 30  },
+    { label: "مواعيد النوم",              value: 20  },
+    { label: "الوفاء",                    value: 100 },
+    { label: "القدرة على التصرف طبيعيًا", error: true }
+  ],
+  finalAnalysis: {
+    normalLine: "يبدو أن الشخص طبيعي تمامًا.",
+    boom1: "بهزر معاك.",
+    boom2: "هو بالتأكيد مش طبيعي."
+  },
+
+  /* ---------- SCREEN 6 : WANTED POSTER ---------- */
+  wanted: {
+    photo: "1.jpeg",
+    name: "يوسف فوزي",
+    sub: "الاسم الحركي — أسد",
+    charges: [
+      "الإزعاج بلا داعٍ",
+      "إلقاء نكات سيئة جدًا",
+      "سرقة تسالي الجميع",
+      "صناعة الفوضى",
+      "كونه الأهبل المفضل للجميع"
+    ],
+    reward: "المكافأة: كعكة عيد ميلاد واحدة 🎂",
+    note: "إذا وُجد، تمنى له عيد ميلاد سعيدًا فورًا."
+  },
+
+  /* ---------- SCREEN 7 : SECRET FILE SEQUENCE ---------- */
+  secret: {
+    a: "...",
+    b: "انتظر.",
+    c: "هناك ملف آخر.",
+    d: "ملف: رسالة_شخصية.txt"
+  },
+
+  /* ---------- SCREEN 8 : PERSONAL MESSAGE ---------- */
+  message: {
+    photo: "5.jpeg",
+    title: "عيد ميلاد سعيد يا أسد",
+    arabic: `يا أسد،
+
+كل سنة وانت طيب يا نيجماااااع ❤️
+
+يمكن عملتلك الموقع ده كله بطريقة هزار، وطلعتك في ملف مخابرات ومتهمك بقضايا مالهاش لازمة 😂
+
+بس بعيد عن كل الهزار، أنا بجد مبسوط إنك صاحبي وإن عندنا كل الذكريات والمواقف دي.
+
+إن شاء الله السنة الجديدة تكون أحسن من كل اللي فات، ونفضل نعمل ذكريات ومواقف أكتر وأكتر.
+
+كل سنة وانت طيب يا أسد ❤️🦁`
+  },
+
+  /* ---------- FINAL SCREEN ---------- */
+  final: {
+    closing: "جارٍ إغلاق الملف السري...",
+    statusLine: "حالة الملف:",
+    statusValue: "تم الحفظ نهائيًا.",
+    name: "يوسف فوزي",
+    hb: "عيد ميلاد سعيد 🎂",
+    tag: "سنة جديدة.<br>فصل جديد.<br>نفس الأسطورة.",
+    credit: "صُنعت بحب ❤️ من صديقك يوسف يا نيجمااااع."
+  }
+};
+
+/* ================================================================
+   END CONFIG — you shouldn't need to edit below this line.
+   ================================================================ */
+
+
+/* ================================================================
+   UTILITIES
+   ================================================================ */
+const $  = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const wait = (ms) => new Promise(r => setTimeout(r, ms));
+const isMobile = () => window.matchMedia("(max-width: 720px)").matches;
+
+function el(tag, cls, html) {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (html != null) n.innerHTML = html;
+  return n;
+}
+
+/** Build an <img> that gracefully falls back to the placeholder. */
+function buildImage(src, alt) {
+  const img = document.createElement("img");
+  img.alt = alt || "";
+  img.loading = "lazy";
+  img.decoding = "async";
+  img.addEventListener("error", () => img.classList.add("failed"), { once: true });
+  img.src = src;
+  return img;
+}
+
+/** Typewriter that respects code points (emoji-safe). */
+let typeSkipFlag = false;
+function typewriter(node, text, opts = {}) {
+  const { speed = 30, jitter = 0, className = "" } = opts;
+  return new Promise(resolve => {
+    const chars = Array.from(text);
+    let i = 0;
+    node.textContent = "";
+    if (className) node.classList.add(className);
+
+    function tick() {
+      if (typeSkipFlag) {
+        node.textContent = text;
+        if (className) node.classList.remove(className);
+        typeSkipFlag = false;
+        resolve();
+        return;
+      }
+      if (i >= chars.length) {
+        if (className) node.classList.remove(className);
+        resolve();
+        return;
+      }
+      node.textContent += chars[i++];
+      setTimeout(tick, speed + (jitter ? Math.random() * jitter : 0));
+    }
+    tick();
+  });
+}
+
+function flashRed() {
+  const f = el("div", "flash");
+  document.body.appendChild(f);
+  requestAnimationFrame(() => f.classList.add("go"));
+  setTimeout(() => f.remove(), 800);
+}
+
+
+/* ================================================================
+   AUDIO (off by default — user toggles)
+   ================================================================ */
+const Sound = {
+  ctx: null,
+  on: false,
+  ambient: null,
+
+  ensure() {
+    if (!this.ctx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      this.ctx = new AC();
+    }
+    if (this.ctx.state === "suspended") this.ctx.resume();
+    return this.ctx;
+  },
+
+  blip(freq = 440, dur = 0.07, type = "sine", vol = 0.045) {
+    if (!this.on) return;
+    const ctx = this.ensure();
+    if (!ctx) return;
+    const t = ctx.currentTime;
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(freq, t);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(ctx.destination);
+    o.start(t); o.stop(t + dur + 0.03);
+  },
+
+  startAmbient() {
+    if (!this.on || this.ambient) return;
+    const ctx = this.ensure();
+    if (!ctx) return;
+    const t = ctx.currentTime;
+
+    const master = ctx.createGain();
+    master.gain.setValueAtTime(0.0001, t);
+    master.gain.exponentialRampToValueAtTime(0.028, t + 2.5);
+
+    const filter = ctx.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(420, t);
+
+    const o1 = ctx.createOscillator();
+    o1.type = "sine"; o1.frequency.setValueAtTime(110, t);
+    const o2 = ctx.createOscillator();
+    o2.type = "sine"; o2.frequency.setValueAtTime(110.6, t);
+    const o3 = ctx.createOscillator();
+    o3.type = "triangle"; o3.frequency.setValueAtTime(220, t);
+    const g3 = ctx.createGain(); g3.gain.setValueAtTime(0.25, t);
+
+    o1.connect(filter);
+    o2.connect(filter);
+    o3.connect(g3); g3.connect(filter);
+    filter.connect(master);
+    master.connect(ctx.destination);
+
+    o1.start(t); o2.start(t); o3.start(t);
+
+    this.ambient = { o1, o2, o3, master, ctx };
+  },
+
+  stopAmbient() {
+    if (!this.ambient) return;
+    const { o1, o2, o3, master, ctx } = this.ambient;
+    const t = ctx.currentTime;
+    try {
+      master.gain.cancelScheduledValues(t);
+      master.gain.setValueAtTime(master.gain.value, t);
+      master.gain.exponentialRampToValueAtTime(0.0001, t + 0.7);
+      setTimeout(() => { try { o1.stop(); o2.stop(); o3.stop(); } catch (e) {} }, 900);
+    } catch (e) {}
+    this.ambient = null;
+  }
+};
+
+const soundToggle = $("#soundToggle");
+soundToggle.addEventListener("click", () => {
+  Sound.on = !Sound.on;
+  soundToggle.classList.toggle("active", Sound.on);
+  soundToggle.textContent = Sound.on ? "♫" : "♪";
+  if (Sound.on) {
+    Sound.ensure();
+    Sound.startAmbient();
+    Sound.blip(660, 0.09, "sine", 0.05);
+  } else {
+    Sound.stopAmbient();
+  }
+});
+
+
+/* ================================================================
+   PARTICLES
+   ================================================================ */
+(function particles() {
+  const cv = $("#particles");
+  const ctx = cv.getContext("2d");
+  let W = 0, H = 0, dpr = Math.min(window.devicePixelRatio || 1, 2);
+  let list = [];
+  let warm = false;
+
+  function resize() {
+    W = cv.width = Math.floor(window.innerWidth * dpr);
+    H = cv.height = Math.floor(window.innerHeight * dpr);
+    cv.style.width = window.innerWidth + "px";
+    cv.style.height = window.innerHeight + "px";
+  }
+
+  function make() {
+    const count = isMobile() ? 20 : 42;
+    list = [];
+    for (let i = 0; i < count; i++) {
+      list.push({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        r: (Math.random() * 1.5 + 0.4) * dpr,
+        vx: (Math.random() - 0.5) * 0.12 * dpr,
+        vy: (Math.random() - 0.5) * 0.12 * dpr,
+        a: Math.random() * 0.35 + 0.08,
+        ph: Math.random() * Math.PI * 2
+      });
+    }
+  }
+
+  let t = 0;
+  function frame() {
+    t += 0.008;
+    ctx.clearRect(0, 0, W, H);
+    const col = warm ? "255,170,130" : "220,225,235";
+    for (const p of list) {
+      p.x += p.vx;
+      p.y += p.vy + (warm ? -0.12 * dpr : 0);
+      if (p.x < -20) p.x = W + 20;
+      if (p.x > W + 20) p.x = -20;
+      if (p.y < -20) p.y = H + 20;
+      if (p.y > H + 20) p.y = -20;
+
+      const flick = 0.6 + 0.4 * Math.sin(t * 2 + p.ph);
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${col},${p.a * flick})`;
+      ctx.fill();
+    }
+    requestAnimationFrame(frame);
+  }
+
+  resize(); make(); frame();
+  window.addEventListener("resize", () => { resize(); make(); }, { passive: true });
+
+  window.__setParticleMode = (w) => { warm = w; };
+})();
+
+
+/* ================================================================
+   CONFETTI
+   ================================================================ */
+function startConfetti(duration = 9000) {
+  const cv = $("#confetti");
+  const ctx = cv.getContext("2d");
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  let W, H;
+
+  function resize() {
+    W = cv.width = Math.floor(window.innerWidth * dpr);
+    H = cv.height = Math.floor(window.innerHeight * dpr);
+    cv.style.width = window.innerWidth + "px";
+    cv.style.height = window.innerHeight + "px";
+  }
+  resize();
+
+  const colors = ["#ff2b3a", "#ffd166", "#ffffff", "#ff8fa3", "#ffb347", "#ff5c78"];
+  let pieces = [];
+  const start = performance.now();
+  let lastSpawn = 0;
+
+  function spawn(n) {
+    for (let i = 0; i < n; i++) {
+      pieces.push({
+        x: Math.random() * W,
+        y: -20 * dpr - Math.random() * 120 * dpr,
+        w: (Math.random() * 7 + 4) * dpr,
+        h: (Math.random() * 10 + 5) * dpr,
+        vx: (Math.random() - 0.5) * 1.6 * dpr,
+        vy: (Math.random() * 1.6 + 1.4) * dpr,
+        rot: Math.random() * Math.PI * 2,
+        vr: (Math.random() - 0.5) * 0.16,
+        color: colors[(Math.random() * colors.length) | 0],
+        sway: Math.random() * Math.PI * 2,
+        alpha: 1
+      });
+    }
+  }
+
+  spawn(70);
+
+  function frame(now) {
+    const elapsed = now - start;
+    ctx.clearRect(0, 0, W, H);
+
+    if (elapsed < duration && now - lastSpawn > 120) {
+      lastSpawn = now;
+      spawn(isMobile() ? 4 : 8);
+    }
+
+    pieces = pieces.filter(p => p.alpha > 0.02 && p.y < H + 60 * dpr);
+
+    for (const p of pieces) {
+      p.sway += 0.03;
+      p.x += p.vx + Math.sin(p.sway) * 0.7 * dpr;
+      p.y += p.vy;
+      p.vy += 0.012 * dpr;
+      p.vx *= 0.995;
+      p.rot += p.vr;
+
+      if (elapsed > duration * 0.72) p.alpha -= 0.012;
+
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, p.alpha);
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h * (0.6 + 0.4 * Math.abs(Math.cos(p.sway))));
+      ctx.restore();
+    }
+
+    if (pieces.length > 0 || elapsed < duration) {
+      requestAnimationFrame(frame);
+    } else {
+      ctx.clearRect(0, 0, W, H);
+    }
+  }
+
+  requestAnimationFrame(frame);
+}
+
+
+/* ================================================================
+   RENDERERS
+   ================================================================ */
+
+/* ---- Profile rows ---- */
+function renderProfile() {
+  const wrap = $("#profileRows");
+  CONFIG.profile.rows.forEach(r => {
+    const accentClass = r.accent ? ` ${r.accent}` : "";
+    const bigClass = r.big ? " big" : "";
+    wrap.appendChild(
+      el("div", "prow",
+        `<span>${r.label}</span><b class="${accentClass.trim()}${bigClass}">${r.value}</b>`)
+    );
+  });
+
+  const photo = $("#profilePhoto");
+  photo.src = CONFIG.profile.photo;
+  photo.addEventListener("error", () => photo.classList.add("failed"), { once: true });
+}
+
+/* ---- Abilities ---- */
+function renderAbilities() {
+  const wrap = $("#abilities");
+  CONFIG.profile.abilities.forEach((a, i) => {
+    const row = el("div", `ability reveal${a.hot ? " hot" : ""}`);
+    row.style.transitionDelay = (i * 70) + "ms";
+    row.innerHTML = `
+      <div class="ability-top">
+        <span>${a.label}</span>
+        <span class="ability-val" data-target="${a.value}">0%</span>
+      </div>
+      <div class="bar"><i></i></div>`;
+    row.__onIn = () => {
+      const bar = row.querySelector(".bar i");
+      const val = row.querySelector(".ability-val");
+      requestAnimationFrame(() => { bar.style.width = a.value + "%"; });
+      countUp(val, a.value, 1000);
+    };
+    wrap.appendChild(row);
+  });
+}
+
+function countUp(node, target, dur) {
+  const start = performance.now();
+  const isInfinity = target === Infinity;
+  function frame(t) {
+    const p = Math.min(1, (t - start) / dur);
+    const eased = 1 - Math.pow(1 - p, 3);
+    node.textContent = Math.round(target * eased) + "%";
+    if (p < 1) requestAnimationFrame(frame);
+    else node.textContent = target + "%";
+  }
+  requestAnimationFrame(frame);
+}
+
+/* ---- Incidents ---- */
+function renderIncidents() {
+  const wrap = $("#incidents");
+  CONFIG.incidents.forEach((inc, i) => {
+    const card = el("article", "card incident reveal");
+    card.style.transitionDelay = (i % 2) * 90 + "ms";
+    card.innerHTML = `
+      <div class="inc-head">
+        <span class="inc-num">واقعة رقم ${inc.id}</span>
+        <span class="inc-status ${inc.status === "مؤكد" ? "ok" : ""}">${inc.status}</span>
+      </div>
+      <h3 class="inc-title">${inc.title}</h3>
+      <p class="inc-desc">${inc.desc}</p>
+      <div class="inc-result">
+        <span>النتيجة</span>
+        ${inc.result}
+      </div>
+      <button class="btn small" data-evidence="${i}">[ عرض الدليل ]</button>`;
+    wrap.appendChild(card);
+  });
+
+  wrap.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-evidence]");
+    if (!btn) return;
+    Sound.blip(520, 0.06, "square", 0.035);
+    openEvidence(parseInt(btn.dataset.evidence, 10));
+  });
+}
+
+/* ---- Evidence modal ---- */
+function openEvidence(index) {
+  const inc = CONFIG.incidents[index];
+  if (!inc) return;
+
+  const body = $("#modalBody");
+  body.innerHTML = "";
+
+  body.appendChild(el("div", "modal-kicker", `ملف الدليل — الواقعة رقم ${inc.id}`));
+  body.appendChild(el("h3", "modal-title", inc.title));
+
+  const media = el("div", "media ar-4x3 modal-media");
+  media.setAttribute("data-ph", "الدليل // " + inc.image.toUpperCase());
+  const img = buildImage(inc.image, "دليل الواقعة");
+  media.appendChild(img);
+  media.appendChild(el("div", "media-scan"));
+  media.appendChild(el("div", "media-tag", "المرفق أ"));
+  body.appendChild(media);
+
+  const box = el("div", "modal-box", `<span>ملاحظة المحلل</span>${inc.evidence}`);
+  body.appendChild(box);
+
+  body.appendChild(el("p", "modal-text", inc.extra));
+
+  const modal = $("#modal");
+  modal.classList.add("open");
+  modal.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
+  $(".modal-panel").scrollTop = 0;
+}
+
+function closeModal() {
+  const modal = $("#modal");
+  modal.classList.remove("open");
+  modal.setAttribute("aria-hidden", "true");
+  document.body.style.overflow = "";
+}
+
+document.addEventListener("click", (e) => {
+  if (e.target.closest("[data-close]")) closeModal();
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeModal();
+});
+
+/* ---- Gallery ---- */
+function renderGallery() {
+  const wrap = $("#gallery");
+  CONFIG.memories.forEach((m, i) => {
+    const shot = el("article", "shot reveal");
+    shot.style.transitionDelay = (i % 3) * 90 + "ms";
+
+    const media = el("div", "media ar-4x3");
+    media.setAttribute("data-ph", "مراقبة // " + m.image.toUpperCase());
+    const img = buildImage(m.image, "صورة مراقبة " + (i + 1));
+    media.appendChild(img);
+    media.appendChild(el("div", "media-scan"));
+    media.appendChild(el("div", "media-rec", "<i></i>تسجيل"));
+    media.appendChild(el("div", "media-tag", `مراقبة #${String(i + 1).padStart(3, "0")}`));
+    shot.appendChild(media);
+
+    const meta = el("div", "shot-meta");
+    meta.innerHTML = `
+      <div class="shot-id">صورة مراقبة #${String(i + 1).padStart(3, "0")}</div>
+      <div class="shot-line"><span>التاريخ</span><b>${m.date}</b></div>
+      <div class="shot-line"><span>الموقع</span><b>${m.location}</b></div>
+      <div class="shot-line"><span>الحالة</span><b class="red">دليل</b></div>
+      <div class="shot-cap">"${m.caption}"</div>`;
+    shot.appendChild(meta);
+
+    wrap.appendChild(shot);
+  });
+}
+
+/* ---- Analysis rows ---- */
+function renderAnalysis() {
+  const wrap = $("#analysisRows");
+  CONFIG.analysis.forEach((row, i) => {
+    const r = el("div", "an-row reveal" + (row.error ? " err" : ""));
+    r.style.transitionDelay = (i * 80) + "ms";
+
+    if (row.error) {
+      r.innerHTML = `
+        <span class="an-label">${row.label}</span>
+        <span class="an-err">خطأ 404</span>`;
+    } else {
+      r.innerHTML = `
+        <span class="an-label">${row.label}</span>
+        <span class="an-bar" aria-hidden="true"></span>
+        <span class="an-val">${row.value}%</span>`;
+      r.__onIn = () => {
+        animateAscii(r.querySelector(".an-bar"), row.value, 1100 + i * 90);
+      };
+    }
+    wrap.appendChild(r);
+  });
+}
+
+function animateAscii(node, value, dur) {
+  const CELLS = 10;
+  const filled = Math.round(value / 10);
+  const start = performance.now();
+  function frame(t) {
+    const p = Math.min(1, (t - start) / dur);
+    const eased = 1 - Math.pow(1 - p, 2.2);
+    const cur = Math.round(filled * eased);
+    let s = "";
+    for (let i = 0; i < CELLS; i++) s += i < cur ? "█" : "░";
+    node.textContent = s;
+    if (p < 1) requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+/* ---- Wanted poster ---- */
+function renderWanted() {
+  const w = CONFIG.wanted;
+  const img = $("#wantedPhoto");
+  img.src = w.photo;
+  img.addEventListener("error", () => img.classList.add("failed"), { once: true });
+
+  $("#wantedName").textContent = w.name;
+  $("#wantedSub").textContent = w.sub;
+  $("#wantedReward").textContent = w.reward;
+  $("#wantedNote").textContent = w.note;
+
+  const list = $("#wantedCharges");
+  w.charges.forEach(c => {
+    list.appendChild(el("div", "charge", c));
+  });
+}
+
+/* ---- Warm message photo ---- */
+function renderWarm() {
+  const img = $("#warmPhoto");
+  img.src = CONFIG.message.photo;
+  img.addEventListener("error", () => img.classList.add("failed"), { once: true });
+
+  const titleEl = $("#warmTitle");
+  titleEl.innerHTML = CONFIG.message.title + ' <span class="heart">❤</span>';
+}
+
+
+/* ================================================================
+   SCROLL REVEAL
+   ================================================================ */
+let revealObserver;
+
+function initReveal() {
+  revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      const node = entry.target;
+      node.classList.add("in");
+      if (typeof node.__onIn === "function") {
+        node.__onIn();
+        node.__onIn = null;
+      }
+      revealObserver.unobserve(node);
+    });
+  }, { threshold: 0.14, rootMargin: "0px 0px -6% 0px" });
+
+  $$(".reveal").forEach(n => revealObserver.observe(n));
+}
+
+
+/* ================================================================
+   SECTION OBSERVER (HUD label + one-shot section sequences)
+   ================================================================ */
+const sectionFired = new Set();
+
+function initSections() {
+  const hudRight = $("#hudRight");
+
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      const id = entry.target.id;
+      if (entry.target.dataset.label) hudRight.textContent = entry.target.dataset.label;
+      if (sectionFired.has(id)) return;
+      sectionFired.add(id);
+      runSectionSequence(id);
+    });
+  }, { rootMargin: "-42% 0px -42% 0px", threshold: 0 });
+
+  $$("section.screen").forEach(s => obs.observe(s));
+}
+
+function runSectionSequence(id) {
+  if (id === "s-analysis") runFinalAnalysis();
+  if (id === "s-secret") runSecretSequence();
+  if (id === "s-message") runWarmMessage();
+  if (id === "s-final") runFinalSequence();
+}
+
+
+/* ================================================================
+   SECTION SEQUENCES
+   ================================================================ */
+
+/* ---- 5. Final analysis reveal ---- */
+async function runFinalAnalysis() {
+  const line = $("#faLine1");
+  const reveal = $("#faReveal");
+  if (!line || !reveal) return;
+
+  await wait(700);
+  await typewriter(line, CONFIG.finalAnalysis.normalLine, { speed: 40, className: "typing" });
+  line.classList.add("done");
+
+  await wait(1700);
+
+  flashRed();
+  Sound.blip(90, 0.5, "sawtooth", 0.05);
+
+  reveal.querySelector(".fa-boom").textContent = CONFIG.finalAnalysis.boom1;
+  reveal.querySelector(".fa-boom2").textContent = CONFIG.finalAnalysis.boom2;
+  reveal.classList.add("show");
+
+  await wait(900);
+  Sound.blip(160, 0.25, "square", 0.035);
+}
+
+/* ---- 7. Secret file sequence ---- */
+let secretRunning = false;
+async function runSecretSequence() {
+  if (secretRunning) return;
+  secretRunning = true;
+
+  const a = $("#secretA"), b = $("#secretB"), c = $("#secretC"), d = $("#secretD");
+  const btn = $("#openMessage");
+
+  await wait(500);
+  await typewriter(a, CONFIG.secret.a, { speed: 220 });
+  await wait(900);
+
+  await typewriter(b, CONFIG.secret.b, { speed: 90 });
+  Sound.blip(140, 0.2, "sine", 0.04);
+  await wait(1100);
+
+  await typewriter(c, CONFIG.secret.c, { speed: 46 });
+  await wait(1000);
+
+  d.classList.remove("hidden");
+  d.style.opacity = "0";
+  d.style.transition = "opacity .7s ease";
+  requestAnimationFrame(() => { d.style.opacity = "1"; });
+  Sound.blip(720, 0.12, "sine", 0.04);
+
+  await wait(700);
+  btn.classList.remove("hidden");
+  btn.style.opacity = "0";
+  btn.style.transition = "opacity .7s ease";
+  requestAnimationFrame(() => { btn.style.opacity = "1"; });
+}
+
+/* ---- 7 → 8 : Transition into the warm message ---- */
+$("#openMessage").addEventListener("click", async () => {
+  Sound.blip(520, 0.1, "sine", 0.05);
+
+  const veil = el("div", "");
+  veil.style.cssText = `
+    position:fixed;inset:0;z-index:180;background:#000;opacity:0;
+    transition:opacity .75s ease;pointer-events:none;`;
+  document.body.appendChild(veil);
+
+  requestAnimationFrame(() => { veil.style.opacity = "1"; });
+  await wait(800);
+
+  /* Switch to warm mode */
+  document.body.classList.add("warm");
+  if (window.__setParticleMode) window.__setParticleMode(true);
+
+  /* Jump instantly to the message section */
+  const html = document.documentElement;
+  const prev = html.style.scrollBehavior;
+  html.style.scrollBehavior = "auto";
+  const target = $("#s-message");
+  window.scrollTo(0, target.offsetTop);
+  html.style.scrollBehavior = prev;
+
+  await wait(120);
+
+  veil.style.opacity = "0";
+  await wait(800);
+  veil.remove();
+
+  /* Fire message typing now that we're in place */
+  runWarmMessage();
+});
+
+/* ---- 8. Warm message typing ---- */
+let warmRunning = false;
+async function runWarmMessage() {
+  if (warmRunning) return;
+  if (!document.body.classList.contains("warm")) return;
+  warmRunning = true;
+
+  const node = $("#arabicMsg");
+  const hint = $("#warmHint");
+
+  await wait(900);
+
+  typeSkipFlag = false;
+  const skipHandler = () => { typeSkipFlag = true; };
+  document.addEventListener("click", skipHandler, { once: true });
+  document.addEventListener("touchstart", skipHandler, { once: true, passive: true });
+
+  await typewriter(node, CONFIG.message.arabic, {
+    speed: 22,
+    jitter: 14,
+    className: "typing"
+  });
+
+  node.classList.add("done");
+  hint.classList.add("gone");
+  document.removeEventListener("click", skipHandler);
+  document.removeEventListener("touchstart", skipHandler);
+  typeSkipFlag = false;
+}
+
+/* ---- Final sequence ---- */
+let finalRunning = false;
+async function runFinalSequence() {
+  if (finalRunning) return;
+  finalRunning = true;
+
+  const step1 = $("#finalStep1");
+  const step2 = $("#finalStep2");
+  const step3 = $("#finalStep3");
+  const bar = $("#closeBar");
+
+  await wait(400);
+
+  /* Animate closing bar */
+  let pct = 0;
+  const iv = setInterval(() => {
+    pct = Math.min(100, pct + Math.random() * 9 + 3);
+    bar.style.width = pct + "%";
+    if (pct >= 100) clearInterval(iv);
+  }, 120);
+
+  await wait(2600);
+  bar.style.width = "100%";
+  await wait(700);
+
+  step1.classList.add("hidden");
+  step2.classList.remove("hidden");
+  Sound.blip(880, 0.14, "sine", 0.05);
+
+  await wait(1500);
+
+  /* Fade to black */
+  const black = el("div", "");
+  black.style.cssText = `
+    position:fixed;inset:0;background:#000;z-index:175;opacity:0;
+    transition:opacity 1s ease;pointer-events:none;`;
+  document.body.appendChild(black);
+  requestAnimationFrame(() => { black.style.opacity = "1"; });
+  await wait(1200);
+
+  step2.classList.add("hidden");
+  step3.classList.remove("hidden");
+
+  /* Scroll to keep the final content centered */
+  const html = document.documentElement;
+  const prev = html.style.scrollBehavior;
+  html.style.scrollBehavior = "auto";
+  window.scrollTo(0, $("#s-final").offsetTop);
+  html.style.scrollBehavior = prev;
+
+  await wait(300);
+  black.style.opacity = "0";
+  await wait(1100);
+  black.remove();
+
+  const music = $("#messageMusic");
+  music.currentTime = 0;
+  music.play().catch(() => {});
+
+  /* Confetti + sound */
+  startConfetti(10000);
+  Sound.blip(660, 0.14, "sine", 0.05);
+  setTimeout(() => Sound.blip(880, 0.16, "sine", 0.05), 160);
+  setTimeout(() => Sound.blip(1100, 0.22, "sine", 0.05), 330);
+}
+
+
+/* ================================================================
+   BOOT SEQUENCE
+   ================================================================ */
+const boot = $("#boot");
+const bootStage1 = $("#bootStage1");
+const bootStage2 = $("#bootStage2");
+const bootStage3 = $("#bootStage3");
+const bootLog = $("#bootLog");
+const bootBar = $("#bootBar");
+const bootPct = $("#bootPct");
+const bootWelcome = $("#bootWelcome");
+
+$("#accessBtn").addEventListener("click", async () => {
+  Sound.blip(520, 0.08, "square", 0.05);
+
+  bootStage1.classList.add("hidden");
+  bootStage2.classList.remove("hidden");
+
+  const steps = CONFIG.boot.steps;
+
+  for (let i = 0; i < steps.length; i++) {
+    const isLast = i === steps.length - 1;
+
+    const line = el("div", "logline" + (isLast ? " ok" : ""), steps[i]);
+    bootLog.appendChild(line);
+
+    const pct = Math.round(((i + 1) / steps.length) * 100);
+    bootBar.style.width = pct + "%";
+    bootPct.textContent = pct + "%";
+
+    if (isLast) Sound.blip(880, 0.16, "sine", 0.05);
+    else Sound.blip(320 + i * 70, 0.05, "square", 0.025);
+
+    await wait(isLast ? 520 : 560 + Math.random() * 320);
+  }
+
+  await wait(600);
+
+  bootStage2.classList.add("hidden");
+  bootStage3.classList.remove("hidden");
+
+  await typewriter(bootWelcome, CONFIG.boot.welcome, { speed: 95 });
+  Sound.blip(440, 0.2, "sine", 0.05);
+
+  await wait(1500);
+  finishBoot();
+});
+
+function finishBoot() {
+  boot.classList.add("gone");
+  document.body.classList.remove("locked");
+  document.body.style.overflow = "";
+
+  const main = $("#main");
+  main.classList.add("on");
+  main.setAttribute("aria-hidden", "false");
+
+  $("#hud").classList.add("on");
+  $("#soundToggle").classList.add("on");
+
+  window.scrollTo(0, 0);
+
+  /* Give the browser a tick, then enable reveal observers */
+  setTimeout(() => {
+    initReveal();
+    initSections();
+  }, 250);
+}
+
+
+/* ================================================================
+   NAVIGATION BUTTONS
+   ================================================================ */
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-next]");
+  if (!btn) return;
+  const target = document.querySelector(btn.dataset.next);
+  if (!target) return;
+  Sound.blip(480, 0.07, "square", 0.035);
+  target.scrollIntoView({ behavior: "smooth", block: "start" });
+});
+
+/* Generic click blips for all buttons */
+document.addEventListener("click", (e) => {
+  if (e.target.closest(".btn") && !e.target.closest("[data-next]")) {
+    Sound.blip(600, 0.05, "square", 0.03);
+  }
+}, true);
+
+
+/* ================================================================
+   SCROLL PROGRESS
+   ================================================================ */
+let scrollTicking = false;
+window.addEventListener("scroll", () => {
+  if (scrollTicking) return;
+  scrollTicking = true;
+  requestAnimationFrame(() => {
+    const doc = document.documentElement;
+    const max = doc.scrollHeight - window.innerHeight;
+    const p = max > 0 ? (window.scrollY / max) : 0;
+    $("#scrollProgress").style.width = Math.min(100, Math.max(0, p * 100)) + "%";
+    scrollTicking = false;
+  });
+}, { passive: true });
+
+
+/* ================================================================
+   INIT
+   ================================================================ */
+(function init() {
+  renderProfile();
+  renderAbilities();
+  renderIncidents();
+  renderGallery();
+  renderAnalysis();
+  renderWanted();
+  renderWarm();
+
+  document.body.style.overflow = "hidden"; // locked during boot
+})();
+
+</script>
+</body>
+</html>
